@@ -109,12 +109,12 @@ end
 
 function Volume:update_dimensions()
 	local scale = state.scale
-	self.size = round(options.volume_size * scale)
+	self.size = round(math.max(options.volume_size, 64 * options.font_scale) * scale)
 	local min_y = Elements:v('top_bar', 'by') or Elements:v('window_border', 'size', 0)
 	local max_y = Elements:v('controls', 'ay') or Elements:v('timeline', 'ay')
 		or display.height - Elements:v('window_border', 'size', 0)
 	local available_height = max_y - min_y
-	local height = round(math.min(220 * scale, available_height * 0.8))
+	local height = round(math.min(360 * scale, available_height * 0.8))
 	self.enabled = self.size >= 24 * scale and height >= 140 * scale
 	local margin = 12 * scale + Elements:v('window_border', 'size', 0)
 	self.ax = round(options.volume == 'left' and margin or display.width - margin - self.size)
@@ -122,7 +122,7 @@ function Volume:update_dimensions()
 	self.bx, self.by = self.ax + self.size, self.ay + height
 	self.mute_ay = self.by - 40 * scale
 	self.slider.enabled = self.enabled
-	self.slider:set_coordinates(self.ax + 6 * scale, self.ay + 32 * scale,
+	self.slider:set_coordinates(self.ax + 6 * scale, self.ay + 40 * scale,
 		self.bx - 6 * scale, self.mute_ay - 8 * scale)
 end
 
@@ -158,8 +158,8 @@ function Volume:render()
  local ass = assdraw.ass_new()
  local cx = (self.ax + self.bx) / 2
  local label = tostring(round(state.volume)) .. '%'
- ass:txt(cx, self.ay + 13 * scale, 5, label, {
-  font = 'Noto Sans', size = math.min(16 * scale * options.font_scale, self.size / (#label * 0.6)),
+ ass:txt(cx, self.ay + 17 * scale, 5, label, {
+  font = 'Noto Sans', size = math.min(24 * scale * options.font_scale, self.size / (#label * 0.6)),
   color = 'F7F3F1', opacity = visibility * (state.mute and 0.5 or 1), bold = false,
   border = 0.5 * scale, border_color = '202020',
  })

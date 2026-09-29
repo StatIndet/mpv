@@ -62,7 +62,7 @@ function Timeline:update_dimensions()
 	self.top_border = round(options.timeline_border * state.scale)
 	self.line_width = round(options.timeline_line_width * state.scale)
 	self.progress_line_width = round(options.progress_line_width * state.scale)
-	self.font_size = math.floor(18 * state.scale * options.font_scale)
+	self.tooltip_font_size = math.floor(18 * state.scale * options.font_scale)
 	local window_border_size = Elements:v('window_border', 'size', 0)
 	self:update_time_gutters()
 	self.by = display.height - window_border_size - (options.controls_size * 1.3 + options.controls_margin + 2) * state.scale
@@ -82,7 +82,7 @@ end
 function Timeline:update_time_gutters()
 	local border = Elements:v('window_border', 'size', 0)
 	self.time_margin = border + 12 * state.scale
-	self.font_size = math.min(math.floor(18 * state.scale * options.font_scale), display.width / 25)
+	self.font_size = math.min(math.floor(24 * state.scale * options.font_scale), display.width / 25)
 	local duration = state.duration or 0
 	local full = format_time(duration, duration)
 	local remaining = format_time(duration / math.min(state.speed or 1, 1), duration)
@@ -396,7 +396,7 @@ function Timeline:render()
 
 		-- Timestamp
 		local opts = {
-			size = self.font_size, offset = timestamp_gap, margin = tooltip_gap, timestamp = options.time_precision > 0,
+			size = self.tooltip_font_size, offset = timestamp_gap, margin = tooltip_gap, timestamp = options.time_precision > 0,
 		}
 		local hovered_time_human = format_time(hovered_seconds, state.duration)
 		opts.width_overwrite = timestamp_width(hovered_time_human, opts)
@@ -439,11 +439,11 @@ function Timeline:render()
 				#state.chapters, 1)
 			if chapter and not chapter.is_end_only then
 				ass:tooltip(tooltip_anchor, chapter.title_wrapped, {
-					size = self.font_size,
+					size = self.tooltip_font_size,
 					offset = tooltip_gap,
 					responsive = false,
 					bold = true,
-					width_overwrite = chapter.title_wrapped_width * self.font_size,
+					width_overwrite = chapter.title_wrapped_width * self.tooltip_font_size,
 					lines = chapter.title_lines,
 					margin = tooltip_gap,
 				})
