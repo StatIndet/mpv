@@ -11,6 +11,7 @@ local fake = {
  register_script_message=function(_,cb) seek=cb end,
  add_key_binding=function(_,name,cb) bindings[name]=cb end,
  register_event=function(name,cb) events[name]=cb end,
+ observe_property=function() end,
 }
 package.preload.mp=function() return fake end
 package.preload['mp.assdraw']=function() return {ass_new=function()
@@ -20,10 +21,18 @@ package.preload['mp.assdraw']=function() return {ass_new=function()
  end})
 end} end
  dofile('scripts/seek_feedback.lua')
-seek('5');time=.1;seek('5');time=.2;seek('5');time=.3;timer.tick()
-assert(overlay.data:find('+15',1,true), 'same-direction seeks must accumulate')
-bindings.back10();time=.4;timer.tick()
-assert(overlay.data:find('−10',1,true), 'reversing direction must reset accumulation')
-time=1.3;timer.tick();assert(overlay.data=='' and timer.killed)
-bindings.forward5();events['end-file']();assert(overlay.data=='')
-print('PASS: accumulation, reversal, silent seek, timed dismissal and end-file cleanup')
+seek('5');time=.08;timer.tick()
+local function arrows() local _,n=overlay.data:gsub('\\an7','');return n end
+assert(arrows()==1, 'single tap must show one arrow')
+time=.1;seek('5');time=.2;seek('5');time=.3;timer.tick()
+assert(overlay.data:find('+ 15',1,true), 'same-direction seeks must accumulate')
+assert(arrows()>1, 'repeated taps must create pursuing arrows')
+time=.55;timer.tick();assert(arrows()==1, 'pursuing arrows must merge, not loop')
+bindings.back10({event="press"});time=.65;timer.tick()
+assert(overlay.data:find('− 10',1,true), 'reversing direction must reset accumulation')
+time=1.9;timer.tick();assert(overlay.data=='' and timer.killed)
+bindings.forward5({event="press"});events['end-file']();assert(overlay.data=='')
+bindings.forward5({event='down'});time=2.1;bindings.forward5({event='repeat'});timer.tick()
+assert(overlay.data:find('+ 10',1,true))
+bindings.forward5({event='up'});time=3.5;timer.tick();assert(overlay.data=='')
+print('PASS: accumulation, reversal, silent seek, tap/repeat/hold, finite arrow merging, timed dismissal and end-file cleanup')
