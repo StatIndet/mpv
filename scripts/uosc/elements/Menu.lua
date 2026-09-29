@@ -122,6 +122,8 @@ function Menu:init(data, callback, opts)
 	self.scroll_height = nil -- Items + spacings - container height.
 	self.opacity = 0 -- Used to fade in/out.
 	self.type = data.type
+	-- Snapshot once: navigating the menu must not chase the pointer.
+	self.pointer_anchor = data.type == 'menu' and not cursor.hidden and {x = cursor.x, y = cursor.y} or nil
 	---@type MenuStack Root MenuStack.
 	self.root = nil
 	---@type MenuStack Current MenuStack.
@@ -147,7 +149,7 @@ function Menu:init(data, callback, opts)
 
 	self:tween_property('opacity', 0, 1)
 	self:enable_key_bindings()
-	Elements:maybe('curtain', 'register', self.id)
+	Elements:maybe('curtain', 'register', self.id, self.type ~= 'menu')
 
 	if data.search_submit then
 		-- We have to defer this so that menu callbacks don't fire before the menu
@@ -355,6 +357,11 @@ function Menu:update_dimensions()
 			menu.search and math.min(menu.search.min_top, menu.search.source.top) or height_available,
 			round((height_available - menu.height + title_height) / 2)
 		)
+		if self.pointer_anchor then
+			menu.top = clamp(title_height + margin + self.padding,
+				self.pointer_anchor.y + title_height + self.padding,
+				display.height - margin - self.padding - footnote_height - menu.height)
+		end
 		if menu.search then
 			menu.search.min_top = math.min(menu.search.min_top, menu.top)
 			menu.search.max_width = math.max(menu.search.max_width, menu.width)
@@ -369,6 +376,12 @@ end
 -- Updates element coordinates to match padding box of currently open (sub)menu.
 function Menu:update_coordinates()
 	local ax = round((display.width - self.current.width) / 2 - self.padding) + self.offset_x
+	if self.pointer_anchor then
+		local margin = round(self.item_height / 2)
+		local reserve = display.width / self.item_height > 14 and self.scroll_step * 3 - margin or 0
+		ax = clamp(margin + reserve, self.pointer_anchor.x,
+			display.width - margin - reserve - self.current.width - self.padding * 2) + self.offset_x
+	end
 	self:set_coordinates(
 		ax, self.current.top - self.padding,
 		ax + self.current.width + self.padding * 2, self.current.top + self.current.height + self.padding

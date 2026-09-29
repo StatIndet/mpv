@@ -12,7 +12,9 @@ function Curtain:init()
 end
 
 ---@param id string
-function Curtain:register(id)
+function Curtain:register(id, dim)
+	-- Keep this choice through fade-out to avoid a dark flash on menu close.
+	self.dim = dim ~= false
 	self.dependents[#self.dependents + 1] = id
 	if #self.dependents == 1 then self:tween_property('opacity', self.opacity, 1) end
 end
@@ -24,7 +26,7 @@ function Curtain:unregister(id)
 end
 
 function Curtain:render()
-	if self.opacity == 0 or config.opacity.curtain == 0 then return end
+	if self.dim == false or self.opacity == 0 or config.opacity.curtain == 0 then return end
 	local ass = assdraw.ass_new()
 	ass:rect(0, 0, display.width, display.height, {
 		color = config.color.curtain, opacity = config.opacity.curtain * self.opacity,
