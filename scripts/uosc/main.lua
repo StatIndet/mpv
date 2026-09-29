@@ -38,7 +38,7 @@ defaults = {
 	controls_persistency = '',
 
 	volume = 'right',
-	volume_size = 64,
+	volume_size = 40,
 	volume_persistency = '',
 	volume_border = 1,
 	volume_step = 1,
