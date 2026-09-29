@@ -455,7 +455,15 @@ function Timeline:render()
 	-- Keep its font size fixed, animate the transform, and snap its center to pixels.
 	if self.marker_reveal > 0.01 then
 		local zoom = 100 * self.marker_reveal
-		ass:icon(round(t2x(state.time)), round(fcy), 12 * state.scale, 'play_rectangle_fill', {
+		local marker_x, marker_y = round(t2x(state.time)), round(fcy)
+		local inset = 3 * state.scale * self.marker_reveal
+		-- Cupertino's play triangle is a hole, not dark ink. Mask the rail
+		-- underneath it: its fractional progress split moves independently of
+		-- the pixel-aligned glyph and otherwise flashes through that hole.
+		ass:rect(marker_x - inset, marker_y - inset, marker_x + inset, marker_y + inset, {
+			color = '202020', opacity = visibility * self.marker_reveal,
+		})
+		ass:icon(marker_x, marker_y, 12 * state.scale, 'play_rectangle_fill', {
 			scale_x = zoom, scale_y = zoom,
 			color = 'F7F3F1', border = 0.35, border_color = '202020',
 			opacity = visibility * self.marker_reveal,
