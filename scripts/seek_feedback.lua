@@ -5,13 +5,28 @@ local assdraw = require 'mp.assdraw'
 local overlay = mp.create_osd_overlay('ass-events')
 local direction, total, started, last = 1, 0, 0, -math.huge
 local pulses, timer, held = {}, nil, nil
+local number_started, number_from = -math.huge, 1
 local function clamp(x) return math.max(0, math.min(1, x)) end
 local function out(t) return 1 - (1 - clamp(t)) ^ 3 end
 local function smooth(t) t=clamp(t); return t*t*(3-2*t) end
+-- Reference recording: numerals compress briefly, rebound, then settle.
+-- Sampling the current scale before retriggering keeps rapid repeats continuous.
+local function number_scale(now)
+    local age = now-number_started
+    if age < 0.035 then
+        return number_from + (0.88-number_from)*smooth(age/0.035)
+    elseif age < 0.355 then
+        local t=age-0.035
+        local spring=1-0.12*math.exp(-10*t)*math.cos(25*t)
+        return 1+(spring-1)*(1-smooth((t-0.24)/0.08))
+    end
+    return 1
+end
 local function clear()
     if timer then timer:kill(); timer=nil end
     overlay:remove()
     total, last, pulses, held = 0, -math.huge, {}, nil
+    number_started,number_from=-math.huge,1
 end
 local function render()
     local now = mp.get_time()
@@ -19,7 +34,7 @@ local function render()
     if age >= 1.25 and not held then clear(); return end
     local w,h=mp.get_osd_size()
     if w<=0 or h<=0 then return end
-    local scale=math.max(0.65,math.min(h/856,1.5))
+    local scale=1.12*math.max(0.65,math.min(h/856,1.5))
     local enter=smooth((now-started)/0.16)
     local leave=held and 1 or (1-smooth((age-1.02)/0.23))
     local opacity=enter*leave
@@ -58,10 +73,16 @@ local function render()
     end
     pulses=alive
     chevron(x,1,opacity*0.95)
+    local label=(direction>0 and '+' or '−')..' '..total
+    local font_size=24*scale
+    -- Keep the resting edge nearest the arrow stable as digit counts change;
+    -- animate about the center of the entire label, including its sign.
+    local label_width=(#tostring(total)*0.42+0.68)*font_size
+    local tx=x-direction*(22*scale+label_width/2)
+    local zoom=number_scale(now)*100
     ass:new_event()
-    ass:append(string.format('{\\an%d\\pos(%f,%f)\\fnNoto Sans\\fs%f\\bord0\\shad0\\1c&HFFFFFF&\\alpha&H%02X&}%s %d',
-        direction>0 and 6 or 4,x-direction*22*scale,y,24*scale,
-        math.floor(255*(1-opacity)),direction>0 and '+' or '−',total))
+    ass:append(string.format('{\\an5\\pos(%f,%f)\\fnNoto Sans\\fs%f\\fscx%f\\fscy%f\\bord0\\shad0\\1c&HFFFFFF&\\alpha&H%02X&}%s',
+        tx,y,font_size,zoom,zoom,math.floor(255*(1-opacity)),label))
     overlay.res_x,overlay.res_y,overlay.data=w,h,ass.text
     overlay:update()
 end
@@ -75,6 +96,8 @@ local function seek(seconds)
     else
         pulses[#pulses+1]=now
     end
+    number_from=continuing and number_scale(now) or 1
+    number_started=now
     direction,total,last=dir,total+math.abs(seconds),now
     mp.command('no-osd seek '..seconds..' relative+exact')
     if not timer then timer=mp.add_periodic_timer(1/60,render) end

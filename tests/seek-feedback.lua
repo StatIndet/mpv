@@ -36,3 +36,11 @@ bindings.forward5({event='down'});time=2.1;bindings.forward5({event='repeat'});t
 assert(overlay.data:find('+ 10',1,true))
 bindings.forward5({event='up'});time=3.5;timer.tick();assert(overlay.data=='')
 print('PASS: accumulation, reversal, silent seek, tap/repeat/hold, finite arrow merging, timed dismissal and end-file cleanup')
+local function zoom() return tonumber(overlay.data:match('\\fscx([%d.]+)')) end
+time=4;bindings.forward5({event='press'})
+time=4.04;timer.tick();assert(zoom()<95, 'number must compress after seek')
+time=4.15;timer.tick();assert(zoom()>100, 'number must rebound past resting scale')
+local before=zoom();bindings.forward5({event='press'});assert(math.abs(zoom()-before)<0.001, 'retrigger must preserve current scale')
+time=4.52;timer.tick();assert(zoom()==100, 'number must settle without lingering oscillation')
+events['end-file']()
+print('PASS: numeral compression, nonlinear rebound, seamless retrigger and settling')
