@@ -232,6 +232,7 @@ end
 function Timeline:render()
 	self:update_time_gutters()
 	if self.size == 0 then
+		self:reset_marker()
 		self:clear_thumbnail()
 		return
 	end
@@ -241,6 +242,7 @@ function Timeline:render()
 	self.is_hovered = false
 
 	if size < 1 then
+		self:reset_marker()
 		self:clear_thumbnail()
 		return
 	end
@@ -361,12 +363,10 @@ function Timeline:render()
 			end
 		end
 	end
-	self:update_marker(rail_hovered and visibility > 0)
-	if self.marker_reveal > 0.01 then
-		ass:icon(t2x(state.time), fcy, 12 * state.scale * self.marker_reveal, 'play_rectangle_fill', {
-			color = 'F7F3F1', border = 0.35 * self.marker_reveal, border_color = '202020', opacity = visibility * self.marker_reveal,
-		})
-	end
+	-- Hysteresis prevents a one-pixel boundary crossing from restarting the animation.
+	local marker_hovered = rail_hovered or (self.marker_visible and not cursor.hidden
+		and self.proximity_raw <= 3 * state.scale and not Elements:v('speed', 'dragging'))
+	self:update_marker(marker_hovered and visibility > 0)
 	local hovered_chapter = nil
 	if visibility > 0 then
 		local opts = {size = self.font_size, font = 'Noto Sans', opacity = visibility, border = 0.6, color = bgt}
@@ -387,7 +387,11 @@ function Timeline:render()
 		-- 0.5 to switch when the pixel is half filled in
 		local color = ((fax - 0.5) < cursor_x and cursor_x < (fbx + 0.5)) and bg or fg
 		local ax, ay, bx, by = cursor_x - 0.5, fay, cursor_x + 0.5, fby
-		ass:rect(ax, ay, bx, by, {color = color, opacity = 0.33})
+		-- The play triangle is a transparent glyph cutout: do not show a cursor
+		-- through it, even though the marker itself is painted last.
+		if self.marker_reveal <= 0.01 or math.abs(cursor_x - t2x(state.time)) > 6 * state.scale then
+			ass:rect(ax, ay, bx, by, {color = color, opacity = 0.33})
+		end
 		local tooltip_anchor = {ax = ax, ay = ay - self.top_border, bx = bx, by = by}
 
 		-- Timestamp
@@ -445,6 +449,17 @@ function Timeline:render()
 				})
 			end
 		end
+	end
+
+	-- Paint last: the hover cursor must never cut through the current-position glyph.
+	-- Keep its font size fixed, animate the transform, and snap its center to pixels.
+	if self.marker_reveal > 0.01 then
+		local zoom = 100 * self.marker_reveal
+		ass:icon(round(t2x(state.time)), round(fcy), 12 * state.scale, 'play_rectangle_fill', {
+			scale_x = zoom, scale_y = zoom,
+			color = 'F7F3F1', border = 0.35, border_color = '202020',
+			opacity = visibility * self.marker_reveal,
+		})
 	end
 
 	-- Clear thumbnail

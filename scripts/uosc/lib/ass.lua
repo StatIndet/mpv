@@ -60,6 +60,9 @@ function ass_mt:txt(x, y, align, value, opts)
 	tags = tags .. '\\fn' .. (opts.font or config.font)
 	-- font size
 	tags = tags .. '\\fs' .. opts.size
+	-- Scale a fixed-size glyph without changing its font-size layout every frame.
+	if opts.scale_x then tags = tags .. '\\fscx' .. opts.scale_x end
+	if opts.scale_y then tags = tags .. '\\fscy' .. opts.scale_y end
 	-- bold
 	if opts.bold or (opts.bold == nil and options.font_bold) then tags = tags .. '\\b1' end
 	-- italic
