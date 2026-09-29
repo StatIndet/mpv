@@ -1,0 +1,12 @@
+/backups/
+/watch_later/
+/subtitles/
+/screenshots/
+*.log
+*.sock
+*.tmp
+.DS_Store
+# Platform helpers are installed from the upstream uosc release.
+/scripts/uosc/bin/
+# Unused legacy Material icon font; UI uses Cupertino.
+/fonts/uosc_icons.otf
