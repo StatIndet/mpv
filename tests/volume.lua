@@ -72,9 +72,9 @@ state.volume=130;local count=#commands;slider:handle_wheel_up();assert(#commands
 state.volume=70
 volume:render();slider:render()
 if not real_mp then
- assert(rectangles[1][3]-rectangles[1][1]==3, 'resting rail must be 3px')
+ assert(rectangles[1][3]-rectangles[1][1]==9, 'resting rail must be 9px')
  rectangles={};cursor.hidden=false;cursor.x=(slider.ax+slider.bx)/2;cursor.y=(slider.ay+slider.by)/2
- slider:render();assert(rectangles[1][3]-rectangles[1][1]==5, 'hover rail must be 5px')
+ slider:render();assert(rectangles[1][3]-rectangles[1][1]==12, 'hover rail must be 12px')
  cursor.hidden=true
 end
 local function trigger(kind,target)

@@ -25,6 +25,10 @@ function Speed:init(props)
 end
 
 function Speed:get_visibility()
+	-- Hold feedback remains visible away from the controls, while menus retain
+	-- their normal curtain priority. Releasing resumes proximity/persistency.
+	if state.hold_speed_active and (Elements.curtain.opacity <= 0
+		or self.render_order >= Elements.curtain.render_order) then return 1 end
 	return Element.get_visibility(self)
 end
 

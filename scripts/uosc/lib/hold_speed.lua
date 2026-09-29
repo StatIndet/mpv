@@ -5,7 +5,12 @@ require('mp.options').read_options(opts, 'hold-speed')
 local timer, previous, pressed
 local function cancel()
 	if timer then timer:kill(); timer = nil end
-	if previous then mp.set_property_number('speed', previous); previous = nil end
+	if previous then
+		mp.set_property_number('speed', previous)
+		previous = nil
+		state.hold_speed_active = false
+		request_render()
+	end
 	pressed = false
 end
 local function down(source)
@@ -16,6 +21,8 @@ local function down(source)
 		if pressed and not mp.get_property_bool('idle-active') then
 			previous = mp.get_property_number('speed', 1)
 			mp.set_property_number('speed', math.max(previous, opts.speed))
+			state.hold_speed_active = true
+			request_render()
 		end
 	end)
 end

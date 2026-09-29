@@ -61,7 +61,7 @@ function VolumeSlider:render()
  local ass = assdraw.ass_new()
  local hovered = self.pressed or (not cursor.hidden and cursor.x >= self.ax and cursor.x <= self.bx
   and cursor.y >= self.ay and cursor.y <= self.by)
- local width = (hovered and 5 or 3) * state.scale
+ local width = (hovered and 12 or 9) * state.scale
  local cx = (self.ax + self.bx) / 2
  local boost_bottom, normal_top = self:segments()
  local opacity = visibility * (state.mute and 0.4 or 1)
