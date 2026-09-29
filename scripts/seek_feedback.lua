@@ -34,7 +34,8 @@ local function render()
     if age >= 1.25 and not held then clear(); return end
     local w,h=mp.get_osd_size()
     if w<=0 or h<=0 then return end
-    local scale=1.12*math.max(0.65,math.min(h/856,1.5))
+    -- Match the enlarged 24px playback labels; scale the whole composition together.
+    local scale=1.5*math.max(0.65,math.min(h/856,1.5))
     local enter=smooth((now-started)/0.16)
     local leave=held and 1 or (1-smooth((age-1.02)/0.23))
     local opacity=enter*leave
